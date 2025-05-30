@@ -1,11 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/gainax2k1/gator/internal/config"
+	"github.com/gainax2k1/gator/internal/database"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -15,6 +18,14 @@ func main() {
 		fmt.Println("Error reading config: ", err)
 	}
 
+	// step 7:
+	db, err := sql.Open("postgres", userConfig.DbURL)
+	if err != nil {
+		fmt.Println("error opening sql: ", err)
+		os.Exit(1)
+	}
+	dbQueries := database.New(db)
+
 	/* removed:
 	userConfig.SetUser("Rico")
 	userConfig, err = config.Read()
@@ -22,11 +33,14 @@ func main() {
 		fmt.Println("Error reading config: ", err)
 	}
 	*/
-	gatorState := state{appState: &userConfig}
+	gatorState := state{appState: &userConfig, db: dbQueries}
 
 	gatorCommands := commands{cliCommands: make(map[string]func(*state, command) error)}
 
 	gatorCommands.register("login", handlerLogin)
+	gatorCommands.register("register", handlerRegister)
+	gatorCommands.register("reset", handlerReset)
+	gatorCommands.register("users", users)
 	gatorArgs := os.Args
 
 	if len(gatorArgs) < 2 {
