@@ -8,7 +8,6 @@ import (
 
 	"github.com/gainax2k1/gator/internal/config"
 	"github.com/gainax2k1/gator/internal/database"
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -45,7 +44,7 @@ func (c *commands) register(name string, f func(*state, command) error) { // Thi
 	c.cliCommands[name] = f
 }
 
-func users(s *state, cmd command) error { /// THIS IS PLACEHOLDER CODE< NEEDS WORK!!!
+func users(s *state, cmd command) error {
 	usernames, err := s.db.GetUsers(context.Background())
 	if err != nil {
 		return err
@@ -64,13 +63,6 @@ func users(s *state, cmd command) error { /// THIS IS PLACEHOLDER CODE< NEEDS WO
 	}
 	return nil
 
-	/* i don'tknow if any of this is right for this
-	if gatorCommand, exists :- c.cliCommands[cmd.name]; exists{
-		return gatorCommand(s, cmd)
-	} else {
-		return fmt.Errorf(("command not found"))
-	}
-	*/
 }
 
 // Create a register handler and register it with the commands. Usage:
@@ -82,7 +74,6 @@ func handlerRegister(s *state, cmd command) error {
 	var newUser database.CreateUserParams
 
 	newUser.Name = cmd.arguments[0]
-	newUser.ID = uuid.New()
 	newUser.CreatedAt = time.Now()
 	newUser.UpdatedAt = time.Now()
 
@@ -145,9 +136,106 @@ func handlerReset(s *state, cmd command) error {
 	err := s.db.Reset(context.Background())
 	if err != nil {
 		fmt.Println("error reseting databse: ", err)
+		return err
 		os.Exit(1) //maybe overkill? maybe just return err?
 	}
 	fmt.Println("successfully reset database.")
 	os.Exit(0)
-	return nil //not sure why neccessary
+	return nil //not sure why neccessary for compiler
+}
+
+func handlerAgg(s *state, cmd command) error {
+	url := "https://www.wagslane.dev/index.xml"
+
+	// Create a context with 10-second timeout, instead of just background
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	rssfeed, err := fetchFeed(ctx, url)
+	if err != nil {
+		return fmt.Errorf("couldn't fetch feed: %w", err)
+	}
+
+	fmt.Printf("%+v\n", rssfeed)
+
+	return nil
+}
+
+func handlerAddFeed(s *state, cmd command) error {
+
+	if len(cmd.arguments) < 2 {
+		return fmt.Errorf("add feed handler expects two arguments (<name of feed> <url>); missing one or both ")
+	}
+
+	current_user := s.appState.CurrentUserName
+	user_info, err := s.db.GetUser(context.Background(), current_user)
+	if err != nil {
+		return fmt.Errorf("error retrieving current users id: %w", err)
+	}
+	var newFeed database.CreateFeedParams
+
+	newFeed.Name = cmd.arguments[0]
+	newFeed.Url = cmd.arguments[1]
+	newFeed.CreatedAt = time.Now()
+	newFeed.UpdatedAt = time.Now()
+	newFeed.UserID = user_info.ID // not correct, need users id
+
+	_, err = s.db.CreateFeed(context.Background(), newFeed)
+	if err != nil {
+		/*
+			value, ok := err.(*pq.Error)
+			if ok {
+				if value.Code == pq.ErrorCode("23505") {
+					fmt.Println("feed already exists, exiting...")
+					os.Exit(1)
+
+				}
+			}
+		*/
+		return fmt.Errorf("error creating feed: %w", err)
+	}
+
+	fmt.Printf("New feed created.\n Feed name: %s\nurl: %s\n", newFeed.Name, newFeed.Url) // nicely formated
+	fmt.Printf("%+v\n", newFeed)                                                          // ugly, brute force the whole dang thing
+
+	return nil
+	/*
+	   Add a new command called addfeed. It takes two args:
+	   name: The name of the feed
+	   url: The URL of the feed
+	   At the top of the handler, get the current user from the database and connect the feed to that user.
+
+	   If everything goes well, print out the fields of the new feed record.
+	*/
+}
+
+func handlerFeeds(s *state, cmd command) error {
+	feeds, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		return err
+	}
+
+	if len(feeds) == 0 {
+		return fmt.Errorf("error: no feeds found")
+	}
+
+	for _, feed := range feeds {
+		user, err := s.db.GetUserById(context.Background(), feed.UserID)
+		if err != nil {
+			return fmt.Errorf("error looking up user id: %w", err)
+		}
+
+		fmt.Printf("Feed name: %s\n", feed.Name)
+		fmt.Printf("URL: %s\n", feed.Url)
+		fmt.Printf("By User: %s\n", user.Name)
+	}
+
+	return nil
+	/*
+		Add a new feeds handler. It takes no arguments and prints all the feeds in the database to the console. Be sure to include:
+
+		The name of the feed
+		The URL of the feed
+		The name of the user that created the feed (you might need a new SQL query)
+	*/
 }

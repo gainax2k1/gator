@@ -1,10 +1,9 @@
 -- name: CreateUser :one
-INSERT INTO users (id, created_at, updated_at, name)
+INSERT INTO users (created_at, updated_at, name)
 VALUES (
     $1,
     $2,
-    $3,
-    $4
+    $3
 )
 RETURNING *;
 
@@ -19,3 +18,8 @@ DELETE FROM users;
 -- name: GetUsers :many
 SELECT name
     FROM users;
+
+-- name: GetUserById :one
+SELECT *
+    FROM users 
+    WHERE id = $1;

@@ -41,6 +41,9 @@ func main() {
 	gatorCommands.register("register", handlerRegister)
 	gatorCommands.register("reset", handlerReset)
 	gatorCommands.register("users", users)
+	gatorCommands.register("agg", handlerAgg)
+	gatorCommands.register("addfeed", handlerAddFeed)
+	gatorCommands.register("feeds", handlerFeeds)
 	gatorArgs := os.Args
 
 	if len(gatorArgs) < 2 {
