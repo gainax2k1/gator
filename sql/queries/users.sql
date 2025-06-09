@@ -23,3 +23,8 @@ SELECT name
 SELECT *
     FROM users 
     WHERE id = $1;
+
+-- name: GetUserIDBName :one
+SELECT id
+    FROM users
+    where name = $1;
