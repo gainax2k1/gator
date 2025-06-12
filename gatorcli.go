@@ -144,19 +144,30 @@ func handlerReset(s *state, cmd command) error {
 	return nil //not sure why neccessary for compiler
 }
 
-func handlerAgg(s *state, cmd command) error {
-	url := "https://www.wagslane.dev/index.xml"
+func handlerAgg(s *state, cmd command) error { //pdate the agg command to now take a single argument: time_between_reqs.
+	//url := "https://www.wagslane.dev/index.xml"
 
-	// Create a context with 10-second timeout, instead of just background
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	rssfeed, err := fetchFeed(ctx, url)
-	if err != nil {
-		return fmt.Errorf("couldn't fetch feed: %w", err)
+	if len(cmd.arguments) != 1 {
+		return fmt.Errorf("Agg hander expects one argument <duration string>")
 	}
 
-	fmt.Printf("%+v\n", rssfeed)
+	time_between_reqs, err := time.ParseDuration(cmd.arguments[0])
+	if err != nil {
+		return fmt.Errorf("error parsing time between reqs: %w", err)
+	}
+
+	// Create a context with  timeout in seconds, instead of just background
+	//ctx, cancel := context.WithTimeout(context.Background(), time_between_reqs)
+	//defer cancel()
+	fmt.Printf("Collecting feeds every %v\n", time_between_reqs)
+
+	ticker := time.NewTicker(time_between_reqs)
+	for ; ; <-ticker.C {
+		err = scrapeFeeds(s)
+		if err != nil {
+			return fmt.Errorf("error scraping feeds: %w", err)
+		}
+	}
 
 	return nil
 }
