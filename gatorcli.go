@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gainax2k1/gator/internal/config"
@@ -353,4 +354,37 @@ func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) 
 		return nil
 	}
 
+}
+
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	if len(cmd.arguments) > 1 {
+		return fmt.Errorf("browses handler expects at most one argument <number of posts to display>")
+	}
+	displayLimit := 2
+	var err error
+	if len(cmd.arguments) == 1 {
+		displayLimit, err = strconv.Atoi(cmd.arguments[0])
+		if err != nil {
+			return fmt.Errorf("error converting argument to integer: %w", err)
+		}
+
+		fmt.Printf("limiting to: %v\n", displayLimit)
+	}
+
+	var getPostParams database.GetPostsParams
+	getPostParams.Limit = int32(displayLimit)
+	getPostParams.UserID = user.ID
+	posts, err := s.db.GetPosts(context.Background(), getPostParams)
+	if err != nil {
+		return fmt.Errorf("error getting posts: %w", err)
+	}
+
+	for _, post := range posts {
+		err = PrintPost(post)
+		if err != nil {
+			return fmt.Errorf("error displaying post: %w", err)
+		}
+
+	}
+	return nil
 }
