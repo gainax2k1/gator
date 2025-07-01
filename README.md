@@ -34,25 +34,25 @@ where <username> and <password> are the apropriate credentials for your postgres
 
 * Available commands: *
 
-gator register <username> - creates user with <username> and sets to current active user
+<tt>gator register <username></tt> reates user with <username> and sets to current active user
 
-gator login <username> - switches active user to <username>
+<tt>gator login <username></tt>switches active user to <username>
 
-gator reset - resets database
+<tt>gator reset</tt>resets database
 
-gator users - lists all usernames
+<tt>gator users </tt>lists all usernames
 
-gator agg <time> - scrapes all followed feeds and stores posts in database at <time> interval. For example, every five minutes: <tt>5m</tt> 
+<tt>gator agg <time></tt> scrapes all followed feeds and stores posts in database at <time> interval. For example, every five minutes: <tt>5m</tt> 
 
-gator addfeed <"name"> <url> - adds feed to database
+<tt>gator addfeed <"name"> <url> </tt>adds feed to database
 
-gator feeds - lists feeds in database
+<tt>gator feeds </tt>lists feeds in database
 
-gator follow <url> - follows feed to current active username
+<tt>gator follow <url> </tt>follows feed to current active username
 
-gator following - lists feeds current active user is following
+<tt>gator following </tt> lists feeds current active user is following
 
-gator unfollow <url> - current active username unfollows <url>
+<tt>gator unfollow <url> </tt> current active username unfollows <url>
 
-gator browse <optional number> - shows <number> of latest posts, if no number given, defaults to 2 
+<tt>gator browse <optional number></tt> shows <number> of latest posts, if no number given, defaults to 2 
 
